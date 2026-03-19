@@ -1,0 +1,109 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../../app/Livewire/**/*.php';
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap');
+
+@theme {
+    --font-display: 'Cormorant Garamond', serif;
+    --font-body: 'Jost', sans-serif;
+
+    --color-blush:       #e8c9c1;
+    --color-blush-light: #f5ece9;
+    --color-blush-dark:  #c9a49a;
+
+    --color-sand:        #d4b896;
+    --color-sand-light:  #ede0d0;
+    --color-sand-dark:   #b89870;
+
+    --color-smoke:       #8a8580;
+    --color-smoke-light: #c8c4bf;
+    --color-smoke-dark:  #5a5550;
+
+    --color-ink:         #1a1714;
+    --color-cream:       #faf7f4;
+    --color-gold-second-color: #aba09c;
+
+    --letter-spacing-widest2: 0.3em;
+}
+
+/* Base Stiller */
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: var(--font-body);
+    color: var(--color-ink);
+}
+
+h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+}
+
+/* Marquee */
+.marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 28s linear infinite;
+}
+
+@keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+
+/* Product card hover */
+.product-card img {
+    transition: transform .6s cubic-bezier(.25, .46, .45, .94);
+}
+.product-card:hover img {
+    transform: scale(1.06);
+}
+.product-card .quick-view {
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .3s, transform .3s;
+}
+.product-card:hover .quick-view {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Hero Slider */
+.hero-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1.2s cubic-bezier(.4, 0, .2, 1);
+}
+.hero-slide.active { opacity: 1; }
+.hero-slide img { transition: transform 7s ease; }
+.hero-slide.active img { transform: scale(1.06); }
+
+.slide-text {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity .8s .4s, transform .8s .4s;
+}
+.hero-slide.active .slide-text {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Underline link */
+.underline-link {
+    position: relative;
+    display: inline-block;
+}
+.underline-link::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: -2px;
+    width: 0; height: 1px;
+    background: currentColor;
+    transition: width .3s ease;
+}
+.underline-link:hover::after { width: 100%; }
