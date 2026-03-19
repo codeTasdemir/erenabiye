@@ -27,21 +27,14 @@ class Product extends Model
                         new \Intervention\Image\Drivers\Gd\Driver()
                     );
 
-                    $newFilename = pathinfo($model->main_image, PATHINFO_DIRNAME)
-                        . '/' . uniqid() . '.webp';
-                    $newPath = storage_path('app/public/' . $newFilename);
-
                     $manager->read($sourcePath)
                         ->toWebp(85)
-                        ->save($newPath);
+                        ->save($sourcePath);
 
-                    unlink($sourcePath);
-                    $model->main_image = $newFilename;
                 }
             }
         });
     }
-
     protected $fillable = [
         'category_id',
         'name',

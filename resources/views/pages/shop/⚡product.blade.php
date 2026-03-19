@@ -31,12 +31,13 @@ new #[Layout('layouts.app')] class extends Component {
         if ($firstVariant) {
             $this->selectedColorId = $firstVariant->color_id;
 
-            // İlk rengin video ID'sini ayarla
             $colorVideo = $this->product->colorVideos->firstWhere('color_id', $firstVariant->color_id);
             $this->activeVideoId = $colorVideo?->video_id ?? null;
         }
 
         $this->images = $this->buildImagesFor($this->selectedColorId);
+
+        $this->syncQuantityFromCart();
     }
 
     private function buildImagesFor(?int $colorId): array
@@ -156,6 +157,33 @@ new #[Layout('layouts.app')] class extends Component {
     {
         $this->selectedSizeId = $sizeId;
         $this->addedToCart = false;
+        $this->syncQuantityFromCart();
+    }
+
+    private function syncQuantityFromCart(): void
+    {
+        if (!$this->selectedSizeId || !$this->selectedColorId) {
+            $this->quantity = 1;
+            return;
+        }
+
+        $variant = $this->selectedVariant;
+        if (!$variant) {
+            $this->quantity = 1;
+            return;
+        }
+
+        if (auth()->check()) {
+            $cartItem = \App\Models\CartItem::where('user_id', auth()->id())
+                ->where('product_id', $this->product->id)
+                ->where('product_variant_id', $variant->id)
+                ->first();
+            $this->quantity = $cartItem?->quantity ?? 1;
+        } else {
+            $cart = session()->get('cart', []);
+            $key = $this->product->id . '_' . $variant->id;
+            $this->quantity = $cart[$key]['quantity'] ?? 1;
+        }
     }
     public function incrementQuantity(): void
     {
@@ -191,26 +219,19 @@ new #[Layout('layouts.app')] class extends Component {
 
         $stock = $this->selectedVariant?->stock ?? $this->product->stock;
 
+        if ($this->quantity > $stock) {
+            $this->addError('cart', "Bu üründen en fazla {$stock} adet ekleyebilirsiniz.");
+            return;
+        }
+
         if (auth()->check()) {
             $cartItem = \App\Models\CartItem::where('user_id', auth()->id())
                 ->where('product_id', $this->product->id)
                 ->where('product_variant_id', $this->selectedVariant?->id)
                 ->first();
 
-            $currentQty = $cartItem ? $cartItem->quantity : 0;
-
-            if ($currentQty + $this->quantity > $stock) {
-                $remaining = $stock - $currentQty;
-                if ($remaining <= 0) {
-                    $this->addError('cart', 'Bu üründen sepetinizde maksimum stok kadar var.');
-                } else {
-                    $this->addError('cart', "Bu üründen en fazla {$remaining} adet daha ekleyebilirsiniz.");
-                }
-                return;
-            }
-
             if ($cartItem) {
-                $cartItem->increment('quantity', $this->quantity);
+                $cartItem->update(['quantity' => $this->quantity]);
             } else {
                 \App\Models\CartItem::create([
                     'user_id' => auth()->id(),
@@ -222,20 +243,9 @@ new #[Layout('layouts.app')] class extends Component {
         } else {
             $cart = session()->get('cart', []);
             $key = $this->product->id . '_' . ($this->selectedVariant?->id ?? 0);
-            $currentQty = $cart[$key]['quantity'] ?? 0;
-
-            if ($currentQty + $this->quantity > $stock) {
-                $remaining = $stock - $currentQty;
-                if ($remaining <= 0) {
-                    $this->addError('cart', 'Bu üründen sepetinizde maksimum stok kadar var.');
-                } else {
-                    $this->addError('cart', "Bu üründen en fazla {$remaining} adet daha ekleyebilirsiniz.");
-                }
-                return;
-            }
 
             if (isset($cart[$key])) {
-                $cart[$key]['quantity'] += $this->quantity;
+                $cart[$key]['quantity'] = $this->quantity;
             } else {
                 $cart[$key] = [
                     'product_id' => $this->product->id,
@@ -306,13 +316,14 @@ new #[Layout('layouts.app')] class extends Component {
                     images: {{ json_encode(array_map(fn($img) => asset('storage/' . $img), $images)) }},
                     colorHex: '{{ collect($this->availableColors)->firstWhere('color.id', $selectedColorId)['color']->hex_code ?? '' }}'
                 }"
-                    @images-updated.window="images = $event.detail.images; colorHex = $event.detail.colorHex; activeImage = 0">
+                    @images-updated.window="images = $event.detail.images; colorHex = $event.detail.colorHex; activeImage = 0"
+                    @set-active-image.window="activeImage = $event.detail.index">
 
                     {{-- Thumbnail'ler --}}
                     <template x-if="images.length > 1">
                         <div class="flex flex-col gap-1.5 w-[68px] flex-shrink-0">
                             <template x-for="(img, index) in images" :key="index">
-                                <button @click="activeImage = index"
+                                <button @click="$dispatch('set-active-image', { index: index })"
                                     class="w-[68px] aspect-[2/3] overflow-hidden border-2 transition-all flex-shrink-0"
                                     :class="activeImage === index ? 'border-gray-800' : 'border-gray-200 hover:border-gray-400'">
                                     <img :src="img" alt="{{ $product->name }}"
@@ -346,7 +357,8 @@ new #[Layout('layouts.app')] class extends Component {
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
                                             d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
-                                    <span class="font-body text-xs text-gray-400">Ürünün seçilen rengine ait görsel henüz yüklenmemiştir!</span>
+                                    <span class="font-body text-xs text-gray-400">Ürünün seçilen rengine ait görsel
+                                        henüz yüklenmemiştir!</span>
                                 </div>
                             </template>
 
@@ -516,7 +528,6 @@ new #[Layout('layouts.app')] class extends Component {
                     <div class="mb-5">
                         <div class="flex items-center justify-between mb-3">
                             <h3 class="font-body text-xs tracking-widest uppercase text-ink">Beden</h3>
-
                         </div>
                         <div class="flex flex-wrap gap-2" wire:key="sizes-{{ $selectedColorId }}">
                             @foreach ($this->availableSizes as $item)
@@ -524,10 +535,10 @@ new #[Layout('layouts.app')] class extends Component {
                                     <button wire:click="selectSize({{ $item['size']->id }})"
                                         wire:key="size-{{ $item['size']->id }}"
                                         class="min-w-[44px] h-11 px-3 border font-body text-xs transition-all relative
-                                               {{ $item['stock'] <= 0 ? 'opacity-40 cursor-not-allowed line-through' : '' }}
-                                               {{ $selectedSizeId === $item['size']->id
-                                                   ? 'bg-ink text-cream border-ink'
-                                                   : 'border-sand text-ink hover:border-ink' }}"
+                               {{ $item['stock'] <= 0 ? 'opacity-40 cursor-not-allowed line-through' : '' }}
+                               {{ $selectedSizeId === $item['size']->id
+                                   ? 'bg-ink text-cream border-ink'
+                                   : 'border-sand text-ink hover:border-ink' }}"
                                         {{ $item['stock'] <= 0 ? 'disabled' : '' }}>
                                         {{ $item['size']->name }}
                                         @if ($item['stock'] > 0 && $item['stock'] <= 3)
@@ -544,6 +555,32 @@ new #[Layout('layouts.app')] class extends Component {
                             </p>
                         @endif
                     </div>
+
+                    {{-- Adet Seçici --}}
+                    @if ($selectedSizeId && $this->selectedVariant)
+                        <div class="flex items-center gap-4 mb-5">
+                            <h3 class="font-body text-xs tracking-widest uppercase text-ink">Adet</h3>
+                            <div class="flex items-center border border-sand">
+                                <button wire:click="decrementQuantity"
+                                    class="w-10 h-10 flex items-center justify-center text-ink hover:bg-sand/20 transition-colors
+                           font-body text-lg {{ $quantity <= 1 ? 'opacity-30 cursor-not-allowed' : '' }}">
+                                    −
+                                </button>
+                                <span
+                                    class="w-10 h-10 flex items-center justify-center font-body text-sm font-medium text-ink border-x border-sand">
+                                    {{ $quantity }}
+                                </span>
+                                <button wire:click="incrementQuantity"
+                                    class="w-10 h-10 flex items-center justify-center text-ink hover:bg-sand/20 transition-colors
+                           font-body text-lg {{ $quantity >= ($this->selectedVariant->stock ?? 1) ? 'opacity-30 cursor-not-allowed' : '' }}">
+                                    +
+                                </button>
+                            </div>
+                            <span class="font-body text-xs text-smoke">
+                                Stok: {{ $this->selectedVariant->stock }} adet
+                            </span>
+                        </div>
+                    @endif
                 @endif
 
                 {{-- Hata --}}
