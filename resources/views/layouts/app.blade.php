@@ -55,8 +55,8 @@
     @livewireStyles
 
     {{-- Alpine.js --}}
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
+{{--     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+ --}}
     {{-- Google Analytics --}}
     @if ($gaId = \App\Models\Setting::get('google_analytics_id'))
         <script async src="https://www.googletagmanager.com/gtag/js?id={{ $gaId }}"></script>

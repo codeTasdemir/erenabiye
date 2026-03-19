@@ -41,19 +41,18 @@ new #[Layout('layouts.app')] class extends Component {
 
     private function buildImagesFor(?int $colorId): array
     {
-        $colorImages = $colorId ? $this->product->images->where('color_id', $colorId)->sortBy('sort_order')->pluck('image') : collect();
-
-        $generalImages = $this->product->images->whereNull('color_id')->sortBy('sort_order')->pluck('image');
-
-        $gallery = $colorImages->isNotEmpty() ? $colorImages->concat($generalImages) : $generalImages;
-
-        if ($this->product->main_image && !$gallery->contains($this->product->main_image)) {
-            $gallery = collect([$this->product->main_image])->concat($gallery);
+        if (!$colorId) {
+            return [];
         }
 
-        return $gallery->filter()->unique()->values()->toArray();
-    }
+        $colorImages = $this->product->images->where('color_id', $colorId)->sortBy('sort_order')->pluck('image');
 
+        if ($colorImages->isNotEmpty()) {
+            return $colorImages->filter()->unique()->values()->toArray();
+        }
+
+        return [];
+    }
     #[Computed(cache: false)]
     public function availableSizes()
     {
@@ -141,27 +140,23 @@ new #[Layout('layouts.app')] class extends Component {
     {
         $this->selectedColorId = $colorId;
         $this->selectedSizeId = null;
+        $this->addedToCart = false;
         $this->images = $this->buildImagesFor($colorId);
+        $this->activeImage = 0;
 
-        $firstColorImage = $this->product->images->where('color_id', $colorId)->sortBy('sort_order')->first();
-
-        if ($firstColorImage) {
-            $index = array_search($firstColorImage->image, $this->images);
-            $this->activeImage = $index !== false ? $index : 0;
-        } else {
-            $this->activeImage = 0;
-        }
-
-        // Renge ait video ID'sini güncelle
         $colorVideo = $this->product->colorVideos->firstWhere('color_id', $colorId);
         $this->activeVideoId = $colorVideo?->video_id ?? null;
+
+        $color = $this->product->variants->where('color_id', $colorId)->first()?->color;
+
+        $this->dispatch('images-updated', images: array_map(fn($img) => asset('storage/' . $img), $this->images), colorHex: $color?->hex_code ?? '');
     }
 
     public function selectSize(int $sizeId): void
     {
         $this->selectedSizeId = $sizeId;
+        $this->addedToCart = false;
     }
-
     public function incrementQuantity(): void
     {
         $maxStock = $this->selectedVariant?->stock ?? $this->product->stock;
@@ -306,71 +301,84 @@ new #[Layout('layouts.app')] class extends Component {
 
             {{-- ── SOL: GÖRSELLER ── --}}
             <div class="lg:w-[500px] flex-shrink-0">
-                <div class="flex gap-2">
+                <div class="flex gap-2" x-data="{
+                    activeImage: 0,
+                    images: {{ json_encode(array_map(fn($img) => asset('storage/' . $img), $images)) }},
+                    colorHex: '{{ collect($this->availableColors)->firstWhere('color.id', $selectedColorId)['color']->hex_code ?? '' }}'
+                }"
+                    @images-updated.window="images = $event.detail.images; colorHex = $event.detail.colorHex; activeImage = 0">
 
-                    @if (count($images) > 1)
+                    {{-- Thumbnail'ler --}}
+                    <template x-if="images.length > 1">
                         <div class="flex flex-col gap-1.5 w-[68px] flex-shrink-0">
-                            @foreach ($images as $index => $image)
-                                <button wire:click="$set('activeImage', {{ $index }})"
-                                    class="w-[68px] aspect-[2/3] overflow-hidden border-2 transition-all flex-shrink-0
-                                           {{ $activeImage === $index ? 'border-gray-800' : 'border-gray-200 hover:border-gray-400' }}">
-                                    <img src="{{ asset('storage/' . $image) }}"
-                                        alt="{{ $product->name }} {{ $index + 1 }}"
+                            <template x-for="(img, index) in images" :key="index">
+                                <button @click="activeImage = index"
+                                    class="w-[68px] aspect-[2/3] overflow-hidden border-2 transition-all flex-shrink-0"
+                                    :class="activeImage === index ? 'border-gray-800' : 'border-gray-200 hover:border-gray-400'">
+                                    <img :src="img" alt="{{ $product->name }}"
                                         class="w-full h-full object-cover" loading="lazy" />
                                 </button>
-                            @endforeach
+                            </template>
                         </div>
-                    @endif
+                    </template>
 
+                    {{-- Ana Görsel --}}
                     <div class="flex-1 relative overflow-hidden bg-gray-50" style="aspect-ratio: 2/3;"
-                        x-data="{ videoOpen: false }" x-on:livewire:navigating.window="videoOpen = false">
+                        x-on:livewire:navigating.window="$data.videoOpen = false" x-data="{ videoOpen: false }">
 
                         <div x-show="!videoOpen" class="absolute inset-0">
-                            @if (count($images) > 0)
-                                @foreach ($images as $index => $image)
-                                    <img src="{{ asset('storage/' . $image) }}" alt="{{ $product->name }}"
-                                        class="w-full h-full object-cover absolute inset-0 transition-opacity duration-300
-                                                {{ $activeImage === $index ? 'opacity-100 z-10' : 'opacity-0 z-0' }}" />
-                                @endforeach
-                            @else
-                                <div class="w-full h-full bg-gray-100 flex items-center justify-center">
+                            <template x-if="images.length > 0">
+                                <div class="absolute inset-0">
+                                    <template x-for="(img, index) in images" :key="index">
+                                        <img :src="img" alt="{{ $product->name }}"
+                                            class="w-full h-full object-cover absolute inset-0 transition-opacity duration-300"
+                                            :class="activeImage === index ? 'opacity-100 z-10' : 'opacity-0 z-0'" />
+                                    </template>
+                                </div>
+                            </template>
+
+                            {{-- Görseli olmayan renk için placeholder --}}
+                            <template x-if="images.length === 0">
+                                <div
+                                    class="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center gap-2">
                                     <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
                                             d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
+                                    <span class="font-body text-xs text-gray-400">Ürünün seçilen rengine ait görsel henüz yüklenmemiştir!</span>
                                 </div>
-                            @endif
+                            </template>
 
-                            {{-- Navigasyon okları --}}
-                            @if (count($images) > 1)
-                                <button wire:click="$set('activeImage', {{ max(0, $activeImage - 1) }})"
-                                    class="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/90 border border-gray-200
-                                           flex items-center justify-center hover:bg-white transition-colors shadow-sm">
-                                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15.75 19.5L8.25 12l7.5-7.5" />
-                                    </svg>
-                                </button>
-                                <button
-                                    wire:click="$set('activeImage', {{ min(count($images) - 1, $activeImage + 1) }})"
-                                    class="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/90 border border-gray-200
-                                           flex items-center justify-center hover:bg-white transition-colors shadow-sm">
-                                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                    </svg>
-                                </button>
-                            @endif
+                            {{-- Sol Ok --}}
+                            <button @click="activeImage = activeImage > 0 ? activeImage - 1 : images.length - 1"
+                                x-show="images.length > 1"
+                                class="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/90 border border-gray-200
+               flex items-center justify-center hover:bg-white transition-colors shadow-sm">
+                                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.75 19.5L8.25 12l7.5-7.5" />
+                                </svg>
+                            </button>
+
+                            {{-- Sağ Ok --}}
+                            <button @click="activeImage = activeImage < images.length - 1 ? activeImage + 1 : 0"
+                                x-show="images.length > 1"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/90 border border-gray-200
+               flex items-center justify-center hover:bg-white transition-colors shadow-sm">
+                                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
+                            </button>
                         </div>
 
                         @if ($activeVideoId)
                             <div x-show="videoOpen" class="absolute inset-0 z-30 bg-black">
                                 <iframe
-                                    x-bind:src="videoOpen
-                                        ?
+                                    x-bind:src="videoOpen ?
                                         'https://www.youtube.com/embed/{{ $activeVideoId }}?autoplay=1&mute=1&controls=0&rel=0&playsinline=1&loop=1&playlist={{ $activeVideoId }}&disablekb=1&iv_load_policy=3&cc_load_policy=0&fs=0' :
                                         ''"
                                     class="absolute inset-0 w-full h-full pointer-events-none" frameborder="0"
@@ -382,29 +390,20 @@ new #[Layout('layouts.app')] class extends Component {
 
                         @if ($activeVideoId)
                             <button @click="videoOpen = !videoOpen"
-                                class="d-block absolute top-3 left-3 z-40  items-center gap-3
-                                       text-white transition-all pl-3 pr-3 py-3 rounded-full
-                                       shadow-md backdrop-blur-sm"
-                                :class="videoOpen
-                                    ?
-                                    'bg-black/80 hover:bg-black' :
-                                    'bg-black/60 hover:bg-black/80'">
-
-                                {{-- Oynat ikonu --}}
+                                class="d-block absolute top-3 left-3 z-40 items-center gap-3
+                           text-white transition-all pl-3 pr-3 py-3 rounded-full shadow-md backdrop-blur-sm"
+                                :class="videoOpen ? 'bg-black/80 hover:bg-black' : 'bg-black/60 hover:bg-black/80'">
                                 <svg x-show="!videoOpen" class="w-10 h-10 flex-shrink-0" fill="currentColor"
                                     viewBox="0 0 24 24">
                                     <path d="M8 5v14l11-7z" />
                                 </svg>
-                                {{-- Kapat ikonu --}}
                                 <svg x-show="videoOpen" class="w-10 h-10 flex-shrink-0" fill="none"
                                     stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                         d="M6 18L18 6M6 6l12 12" />
                                 </svg>
-
                                 <span class="font-body text-[11px] tracking-wide uppercase"
-                                    x-text="videoOpen ? 'Kapat' : 'Video'">
-                                </span>
+                                    x-text="videoOpen ? 'Kapat' : 'Video'"></span>
                             </button>
                         @endif
                     </div>
@@ -480,12 +479,19 @@ new #[Layout('layouts.app')] class extends Component {
                                     <button wire:click="selectColor({{ $item['color']->id }})"
                                         title="{{ $item['color']->name }}"
                                         class="relative overflow-hidden border-2 transition-all flex-shrink-0
-                                               {{ !$item['inStock'] ? 'opacity-40' : '' }}
-                                               {{ $selectedColorId === $item['color']->id ? 'border-gray-900' : 'border-gray-200 hover:border-gray-500' }}"
+           {{ !$item['inStock'] ? 'opacity-40' : '' }}
+           {{ $selectedColorId === $item['color']->id ? 'border-gray-900' : 'border-gray-200 hover:border-gray-500' }}"
                                         style="width:58px; aspect-ratio:2/3;"
                                         {{ !$item['inStock'] ? 'disabled' : '' }}>
-                                        @if ($thumbSrc)
-                                            <img src="{{ $thumbSrc }}" alt="{{ $item['color']->name }}"
+                                        @php
+                                            $colorThumb = $this->product->images
+                                                ->where('color_id', $item['color']->id)
+                                                ->sortBy('sort_order')
+                                                ->first();
+                                        @endphp
+                                        @if ($colorThumb)
+                                            <img src="{{ asset('storage/' . $colorThumb->image) }}"
+                                                alt="{{ $item['color']->name }}"
                                                 class="w-full h-full object-cover" />
                                         @else
                                             <div class="w-full h-full"
@@ -548,13 +554,16 @@ new #[Layout('layouts.app')] class extends Component {
                 @enderror
 
                 {{-- Sepete Ekle --}}
-                <button wire:click="addToCart"
+                <button wire:click="addToCart" @disabled(
+                    ($this->availableColors->count() && !$selectedColorId) ||
+                        ($selectedColorId && $this->availableSizes->count() && !$selectedSizeId))
                     class="w-full h-12 text-sm font-bold uppercase tracking-wider transition-all duration-200
-                           flex items-center justify-center gap-2 rounded
-                           {{ $addedToCart
-                               ? 'bg-green-600 text-white'
-                               : 'bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white' }}">
-                    <span wire:loading.remove wire:target="addToCart">
+           flex items-center justify-center gap-2 rounded
+           disabled:opacity-50 disabled:cursor-not-allowed
+           {{ $addedToCart
+               ? 'bg-green-600 text-white'
+               : 'bg-orange-500 hover:bg-orange-600 active:scale-[0.99] text-white' }}">
+                    <span wire:loading.remove wire:target="addToCart" class="flex items-center justify-center gap-2">
                         @if ($addedToCart)
                             ✓ Sepete Eklendi
                         @elseif(!$selectedColorId && $this->availableColors->count())
@@ -565,7 +574,7 @@ new #[Layout('layouts.app')] class extends Component {
                             Sepete Ekle
                         @endif
                     </span>
-                    <span wire:loading wire:target="addToCart" class="flex items-center gap-2">
+                    <span wire:loading.flex wire:target="addToCart" class="items-center justify-center gap-2">
                         <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                 stroke-width="4" />

@@ -29,10 +29,7 @@ class PaymentController extends Controller
 
         session(['current_order_id' => $order->id]);
 
-        return view('payment.checkout', [
-            'order'       => $order,
-            'iframeToken' => $result['token'],
-        ]);
+        return redirect('https://www.paytr.com/odeme/guvenli/' . $result['token']);
     }
 
     /**

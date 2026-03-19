@@ -5,6 +5,12 @@ new class extends Component {
     public bool $mobileMenuOpen = false;
     public string $searchQuery = '';
 
+    #[On('cart-updated')]
+    public function refreshCart(): void {}
+
+    #[On('wishlist-updated')]
+    public function refreshWishlist(): void {}
+
     public function with(): array
     {
         return [
@@ -22,8 +28,8 @@ new class extends Component {
     mobileMenuOpen: false,
     activeMenu: null,
 }" @scroll.window="scrolled = window.scrollY > 50"
-    @keydown.escape.window="activeMenu = null; searchOpen = false; $wire.set('searchQuery', '')">
-
+    @keydown.escape.window="activeMenu = null; searchOpen = false; $wire.set('searchQuery', '')"
+    @cart-updated.window="$wire.refreshCart()" @wishlist-updated.window="$wire.refreshWishlist()">
     {{-- Top Bar --}}
     <div class="bg-white pb-10 sm:pb-0 text-white text-xs  flex items-center justify-between">
         <div class="flex items-center gap-4">

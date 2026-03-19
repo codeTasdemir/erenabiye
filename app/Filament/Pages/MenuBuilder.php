@@ -100,13 +100,13 @@ class MenuBuilder extends FilamentPage
         // Kategori veya sayfa seçildiyse URL'yi otomatik oluşturma
         if ($this->newType === 'category' && $this->newLinkableId) {
             $category = Category::find($this->newLinkableId);
-            $url = $category ? route('category', $category->slug) : '#';
+            $url = $category ? '/kategori/' . $category->slug : '#';
         } elseif ($this->newType === 'page' && $this->newLinkableId) {
             $page = Page::find($this->newLinkableId);
             $url = $page ? '/' . $page->slug : '#';
         } elseif ($this->newType === 'blog' && $this->newLinkableId) {
             $blog = BlogPost::find($this->newLinkableId);
-            $url = $blog ? route('blog.show', $blog->slug) : route('blog.index');
+            $url = $blog ? '/blog/' . $blog->slug : '/blog';
         }
 
         $maxOrder = MenuItem::where('menu_id', $this->selectedMenuId)

@@ -162,6 +162,12 @@ class ProductResource extends Resource
                                 ->disk('public')
                                 ->directory('products')
                                 ->imageEditor()
+                                ->imageEditorMode(2)
+                                ->saveUploadedFileUsing(function ($file, $record) {
+                                    $filename = 'product_' . ($record?->id ?? uniqid()) . '_' . time() . '.webp';
+                                    $file->storeAs('products', $filename, 'public');
+                                    return 'products/' . $filename;
+                                })
                                 ->columnSpanFull(),
 
                             Section::make('Genel Görseller')
@@ -179,6 +185,12 @@ class ProductResource extends Resource
                                                 ->disk('public')
                                                 ->directory('products/general')
                                                 ->imageEditor()
+                                                ->imageEditorMode(2)
+                                                ->saveUploadedFileUsing(function ($file, $record) {
+                                                    $filename = 'general_' . ($record?->id ?? uniqid()) . '_' . time() . '.webp';
+                                                    $file->storeAs('products/general', $filename, 'public');
+                                                    return 'products/general/' . $filename;
+                                                })
                                                 ->required(),
 
                                             TextInput::make('alt_text')
@@ -225,6 +237,12 @@ class ProductResource extends Resource
                                                 ->disk('public')
                                                 ->directory('products/colors')
                                                 ->imageEditor()
+                                                ->imageEditorMode(2)
+                                                ->saveUploadedFileUsing(function ($file, $record) {
+                                                    $filename = 'color_' . ($record?->id ?? uniqid()) . '_' . time() . '.webp';
+                                                    $file->storeAs('products/colors', $filename, 'public');
+                                                    return 'products/colors/' . $filename;
+                                                })
                                                 ->required(),
 
                                             TextInput::make('alt_text')

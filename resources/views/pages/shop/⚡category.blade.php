@@ -137,7 +137,6 @@ new #[Layout('layouts.app')] class extends Component {
     }
 };
 ?>
-
 <div>
     <style>
         details.filter-dropdown {
@@ -224,10 +223,10 @@ new #[Layout('layouts.app')] class extends Component {
             <div class="flex flex-wrap items-center gap-1 md:gap-0">
 
                 {{-- Renk Filtresi --}}
-                <details class="filter-dropdown">
-                    <summary
-                        class="flex items-center gap-1 font-body text-xs text-ink  md:px-4 py-2
-                                   border-r border-sand/40 hover:text-smoke transition-colors whitespace-nowrap">
+                <details x-data="{ open: false }" :open="open" @toggle.prevent class="filter-dropdown">
+                    <summary @click.prevent="open = !open"
+                        class="flex items-center gap-1 font-body text-xs text-ink md:px-4 py-2
+               border-r border-sand/40 hover:text-smoke transition-colors whitespace-nowrap">
                         Renk
                         @if (count($this->colors) > 0)
                             <span
@@ -235,16 +234,18 @@ new #[Layout('layouts.app')] class extends Component {
                                 {{ count($this->colors) }}
                             </span>
                         @endif
-                        <svg class="chevron w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3 h-3 ml-0.5" :class="open ? 'rotate-180' : ''" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </summary>
-                    <div class="dropdown-panel p-4 w-64">
+                    <div class="dropdown-panel p-4 w-64" x-on:click.stop>
                         <div class="flex flex-wrap gap-2">
                             @foreach ($availableColors as $color)
-                                <button wire:click="toggleColor({{ $color->id }})" title="{{ $color->name }}"
+                                <button wire:click="toggleColor({{ $color->id }})"
+                                    wire:key="color-{{ $color->id }}" title="{{ $color->name }}"
                                     class="w-7 h-7 rounded-full border-2 transition-all flex-shrink-0
-                                           {{ in_array($color->id, $this->colors) ? 'border-ink scale-110' : 'border-transparent hover:border-smoke/50' }}"
+                           {{ in_array($color->id, $this->colors) ? 'border-ink scale-110' : 'border-transparent hover:border-smoke/50' }}"
                                     style="background-color: {{ $color->hex_code ?? '#ccc' }}; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1)">
                                 </button>
                             @endforeach
@@ -253,10 +254,10 @@ new #[Layout('layouts.app')] class extends Component {
                 </details>
 
                 {{-- Beden Filtresi --}}
-                <details class="filter-dropdown">
-                    <summary
+                <details x-data="{ open: false }" :open="open" @toggle.prevent class="filter-dropdown">
+                    <summary @click.prevent="open = !open"
                         class="flex items-center gap-1.5 font-body text-xs text-ink px-3 md:px-4 py-2
-                                   border-r border-sand/40 hover:text-smoke transition-colors whitespace-nowrap">
+               border-r border-sand/40 hover:text-smoke transition-colors whitespace-nowrap">
                         Beden
                         @if (count($this->sizes) > 0)
                             <span
@@ -264,16 +265,18 @@ new #[Layout('layouts.app')] class extends Component {
                                 {{ count($this->sizes) }}
                             </span>
                         @endif
-                        <svg class="chevron w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3 h-3 ml-0.5" :class="open ? 'rotate-180' : ''" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </summary>
-                    <div class="dropdown-panel p-4 w-56">
+                    <div class="dropdown-panel p-4 w-56" x-on:click.stop>
                         <div class="flex flex-wrap gap-2">
                             @foreach ($availableSizes as $size)
                                 <button wire:click="toggleSize({{ $size->id }})"
+                                    wire:key="size-{{ $size->id }}"
                                     class="min-w-[2.5rem] h-9 px-2 border font-body text-xs transition-all
-                                           {{ in_array($size->id, $this->sizes) ? 'bg-ink text-cream border-ink' : 'border-sand text-ink hover:border-ink' }}">
+                           {{ in_array($size->id, $this->sizes) ? 'bg-ink text-cream border-ink' : 'border-sand text-ink hover:border-ink' }}">
                                     {{ $size->name }}
                                 </button>
                             @endforeach
@@ -282,29 +285,30 @@ new #[Layout('layouts.app')] class extends Component {
                 </details>
 
                 {{-- Fiyat Filtresi --}}
-                <details class="filter-dropdown">
-                    <summary
+                <details x-data="{ open: false }" :open="open" @toggle.prevent class="filter-dropdown">
+                    <summary @click.prevent="open = !open"
                         class="flex items-center gap-1.5 font-body text-xs text-ink px-3 md:px-4 py-2
-                                   border-r border-sand/40 hover:text-smoke transition-colors whitespace-nowrap">
+               border-r border-sand/40 hover:text-smoke transition-colors whitespace-nowrap">
                         Fiyat
                         @if ($this->minPrice || $this->maxPrice)
                             <span
                                 class="bg-ink text-cream rounded-full w-4 h-4 flex items-center justify-center text-[9px]">1</span>
                         @endif
-                        <svg class="chevron w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3 h-3 ml-0.5" :class="open ? 'rotate-180' : ''" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </summary>
-                    <div class="dropdown-panel p-4 w-56">
+                    <div class="dropdown-panel p-4 w-56" x-on:click.stop>
                         <p class="font-body text-xs text-smoke mb-3 uppercase tracking-widest">Fiyat Aralığı (₺)</p>
                         <div class="flex gap-2 items-center">
                             <input wire:model.live.debounce.600ms="minPrice" type="number" placeholder="Min"
                                 class="w-full border border-sand px-3 py-2 font-body text-xs
-                                          focus:outline-none focus:border-ink bg-transparent" />
+                       focus:outline-none focus:border-ink bg-transparent" />
                             <span class="text-smoke text-xs">—</span>
                             <input wire:model.live.debounce.600ms="maxPrice" type="number" placeholder="Max"
                                 class="w-full border border-sand px-3 py-2 font-body text-xs
-                                          focus:outline-none focus:border-ink bg-transparent" />
+                       focus:outline-none focus:border-ink bg-transparent" />
                         </div>
                     </div>
                 </details>
@@ -321,7 +325,7 @@ new #[Layout('layouts.app')] class extends Component {
                 <div class="ml-auto">
                     <select wire:model.live="sort"
                         class="font-body text-xs border-0 border-l border-sand/40 pl-3 md:pl-4 py-2
-                               focus:outline-none bg-transparent cursor-pointer text-ink">
+               focus:outline-none bg-transparent cursor-pointer text-ink">
                         <option value="latest">Sıralama</option>
                         <option value="latest">En Yeni</option>
                         <option value="featured">Öne Çıkanlar</option>
@@ -370,24 +374,61 @@ new #[Layout('layouts.app')] class extends Component {
         {{-- Ürün Grid --}}
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
             @forelse($products as $product)
-                <div class="group" wire:key="product-{{ $product->id }}">
+                @php
+                    $galleryImages = $product->images
+                        ->whereNull('color_id')
+                        ->sortBy('sort_order')
+                        ->pluck('image')
+                        ->values();
+                    if ($product->main_image && !$galleryImages->contains($product->main_image)) {
+                        $galleryImages = collect([$product->main_image])
+                            ->concat($galleryImages)
+                            ->values();
+                    }
+                    if ($galleryImages->isEmpty() && $product->main_image) {
+                        $galleryImages = collect([$product->main_image]);
+                    }
+                @endphp
 
-                    <div class="relative aspect-[3/4] overflow-hidden bg-gray-50 mb-3">
+                <div class="group" wire:key="product-{{ $product->id }}">
+                    <div class="relative aspect-[3/4] overflow-hidden bg-gray-50 mb-3" x-data="{
+                        current: 0,
+                        timer: null,
+                        images: {{ json_encode($galleryImages->map(fn($img) => asset('storage/' . $img))->values()->toArray()) }}
+                    }"
+                        @mouseenter="if(images.length > 1) { timer = setInterval(() => { current = (current + 1) % images.length }, 800) }"
+                        @mouseleave="clearInterval(timer); timer = null; current = 0">
+
                         <a href="{{ route('product', $product->slug) }}" class="block absolute inset-0">
-                            @if ($product->main_image)
-                                <img src="{{ asset('storage/' . $product->main_image) }}" alt="{{ $product->name }}"
-                                    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                            @if ($galleryImages->isNotEmpty())
+                                <template x-for="(img, index) in images" :key="index">
+                                    <img :src="img" alt="{{ $product->name }}"
+                                        class="w-full h-full object-cover absolute inset-0 transition-opacity duration-500"
+                                        :class="current === index ? 'opacity-100 z-10' : 'opacity-0 z-0'" />
+                                </template>
                             @else
                                 <div class="w-full h-full bg-gradient-to-br from-blush-light to-sand-light"></div>
                             @endif
                         </a>
+
+                        {{-- Görsel nokta indikatörleri --}}
+                        @if ($galleryImages->count() > 1)
+                            <div
+                                class="absolute bottom-8 left-0 right-0 flex justify-center gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <template x-for="(img, index) in images" :key="index">
+                                    <span class="w-1.5 h-1.5 rounded-full transition-colors duration-200"
+                                        :class="current === index ? 'bg-white' : 'bg-white/50'">
+                                    </span>
+                                </template>
+                            </div>
+                        @endif
 
                         @livewire('wishlist-button', ['productId' => $product->id], key('wl-' . $product->id))
 
                         @if ($product->compare_price)
                             <span
                                 class="absolute bottom-2 left-2 bg-ink text-cream pointer-events-none
-                                 font-body text-[10px] tracking-widest uppercase px-2 py-1">
+                             font-body text-[10px] tracking-widest uppercase px-2 py-1 z-20">
                                 %{{ $product->discount_percentage }} İndirim
                             </span>
                         @endif
@@ -395,7 +436,7 @@ new #[Layout('layouts.app')] class extends Component {
                         @if ($product->is_new)
                             <span
                                 class="absolute bottom-2 right-2 bg-sand text-ink pointer-events-none
-                                 font-body text-[10px] tracking-widest uppercase px-2 py-1">
+                             font-body text-[10px] tracking-widest uppercase px-2 py-1 z-20">
                                 Yeni
                             </span>
                         @endif
@@ -442,15 +483,7 @@ new #[Layout('layouts.app')] class extends Component {
                     </div>
                 </div>
             @empty
-                <div class="col-span-full text-center py-20">
-                    <p class="font-display text-3xl text-smoke font-light mb-3">Ürün bulunamadı</p>
-                    <p class="font-body text-sm text-smoke/70 mb-6">Filtrelerinizi değiştirmeyi deneyin</p>
-                    <button wire:click="clearFilters"
-                        class="font-body text-xs tracking-widest2 uppercase border border-ink
-                       px-8 py-3 hover:bg-ink hover:text-cream transition-all">
-                        Filtreleri Temizle
-                    </button>
-                </div>
+                {{-- aynı kalır --}}
             @endforelse
         </div>
 

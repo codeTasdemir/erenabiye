@@ -226,7 +226,7 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
 
         <div class="grid grid-cols-3 gap-1">
 
-            {{-- GRUP 1--}}
+            {{-- GRUP 1 --}}
             @foreach ($cats->slice(0, 3) as $i => $category)
                 <a href="{{ route('category', $category->slug) }}" class="group relative overflow-hidden bg-gray-900"
                     style="aspect-ratio:3/2.2;">
@@ -410,28 +410,20 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
                             `transform: translateX(calc(-${current} * 33.333%))`">
                         @foreach ($featuredProducts as $product)
                             <div class="w-1/2 md:w-1/3 flex-shrink-0 px-1.5 md:px-2 group">
-                                <a href="{{ route('product', $product->slug) }}"
-                                    class="block relative aspect-[3/4] overflow-hidden bg-blush-light mb-2 md:mb-3">
-                                    @if ($product->main_image)
-                                        <img src="{{ asset('storage/' . $product->main_image) }}"
-                                            alt="{{ $product->name }}"
-                                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                                    @else
-                                        <div class="w-full h-full bg-gradient-to-br from-blush-light to-sand-light">
-                                        </div>
-                                    @endif
-
-                                    {{-- Favori Butonu --}}
-                                    <button
-                                        class="absolute top-2 right-2 md:top-3 md:right-3 w-7 h-7 md:w-8 md:h-8 bg-white/80 rounded-full
-                                           flex items-center justify-center hover:bg-white transition-colors">
-                                        <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-smoke" fill="none"
-                                            stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                                        </svg>
-                                    </button>
-                                </a>
+                                <div class="relative aspect-[3/4] overflow-hidden bg-blush-light mb-2 md:mb-3">
+                                    <a href="{{ route('product', $product->slug) }}" class="block absolute inset-0">
+                                        @if ($product->main_image)
+                                            <img src="{{ asset('storage/' . $product->main_image) }}"
+                                                alt="{{ $product->name }}"
+                                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                        @else
+                                            <div
+                                                class="w-full h-full bg-gradient-to-br from-blush-light to-sand-light">
+                                            </div>
+                                        @endif
+                                    </a>
+                                    @livewire('wishlist-button', ['productId' => $product->id], key('wl-feat-' . $product->id))
+                                </div>
 
                                 <p class="font-body text-xs text-ink leading-snug line-clamp-2 mb-1">
                                     <a href="{{ route('product', $product->slug) }}"
@@ -485,50 +477,46 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
     </section>
 
     {{-- ── YENİ GELENLER ── --}}
-    <section class="max-w-screen-xl mx-auto py-5">
+  <section class="max-w-screen-xl mx-auto py-5">
+    <div class="overflow-hidden" x-data="{ current: 0, total: {{ max(0, count($newProducts) - 4) }}, isMobile: window.innerWidth < 768 }" x-init="window.addEventListener('resize', () => { isMobile = window.innerWidth < 768 })">
 
-
-
-        <div class="overflow-hidden" x-data="{ current: 0, total: {{ max(0, count($newProducts) - 4) }}, isMobile: window.innerWidth < 768 }" x-init="window.addEventListener('resize', () => { isMobile = window.innerWidth < 768 })">
-
-            <div class="flex items-center justify-between mb-8">
-                <div class="flex-1 h-px bg-sand/50"></div>
-                <h2 class="font-body text-[11px] md:text-[20px] tracking-widest2 uppercase text-ink whitespace-nowrap">
-                    Son Eklenen Ürünler
-                </h2>
-                <div class="flex-1 h-px bg-sand/50"></div>
-                <div class="flex items-center gap-2 ml-4">
-                    <button @click="current = Math.max(0, current - 1)"
-                        class="w-8 h-8 border border-sand/60 flex items-center justify-center
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex-1 h-px bg-sand/50"></div>
+            <h2 class="font-body text-[11px] md:text-[20px] tracking-widest2 uppercase text-ink whitespace-nowrap">
+                Son Eklenen Ürünler
+            </h2>
+            <div class="flex-1 h-px bg-sand/50"></div>
+            <div class="flex items-center gap-2 ml-4">
+                <button @click="current = Math.max(0, current - 1)"
+                    class="w-8 h-8 border border-sand/60 flex items-center justify-center
                            hover:border-ink hover:bg-ink hover:text-cream transition-all text-ink">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                d="M15.75 19.5L8.25 12l7.5-7.5" />
-                        </svg>
-                    </button>
-                    <button
-                        @click="current = Math.min(isMobile ? {{ max(0, count($newProducts) - 2) }} : total, current + 1)"
-                        class="w-8 h-8 border border-sand/60 flex items-center justify-center
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+                <button
+                    @click="current = Math.min(isMobile ? {{ max(0, count($newProducts) - 2) }} : total, current + 1)"
+                    class="w-8 h-8 border border-sand/60 flex items-center justify-center
                            hover:border-ink hover:bg-ink hover:text-cream transition-all text-ink">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                        </svg>
-                    </button>
-                </div>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </button>
             </div>
+        </div>
 
-            <div class="flex transition-transform duration-500"
-                :style="isMobile
-                    ?
-                    `transform: translateX(calc(-${current} * 50%))` :
-                    `transform: translateX(calc(-${current} * 25%))`">
+        <div class="flex transition-transform duration-500"
+            :style="isMobile
+                ? `transform: translateX(calc(-${current} * 50%))`
+                : `transform: translateX(calc(-${current} * 25%))`">
 
-                @foreach ($newProducts as $product)
-                    <div class="w-1/2 md:w-1/4 flex-shrink-0 px-3 group">
+            @foreach ($newProducts as $product)
+                <div class="w-1/2 md:w-1/4 flex-shrink-0 px-3 group">
 
-                        <a href="{{ route('product', $product->slug) }}"
-                            class="block relative aspect-[3/4] overflow-hidden bg-gray-100 mb-3">
+                    <div class="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-3">
+                        <a href="{{ route('product', $product->slug) }}" class="block absolute inset-0">
                             @if ($product->main_image)
                                 <img src="{{ asset('storage/' . $product->main_image) }}" alt="{{ $product->name }}"
                                     class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -536,30 +524,30 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
                                 <div class="w-full h-full bg-gradient-to-br from-blush-light to-sand-light"></div>
                             @endif
                         </a>
-                        <h3 class="font-body text-xs text-ink leading-snug line-clamp-2 mb-1">
-                            <a href="{{ route('product', $product->slug) }}"
-                                class="hover:text-smoke transition-colors">
-                                {{ $product->name }}
-                            </a>
-                        </h3>
-                        <div class="flex items-center gap-2">
-                            @if ($product->compare_price)
-                                <span class="font-body text-xs text-smoke line-through">
-                                    ₺{{ number_format($product->compare_price, 2, ',', '.') }}
-                                </span>
-                            @endif
-                            <span class="font-body text-sm font-medium text-ink">
-                                ₺{{ number_format($product->price, 2, ',', '.') }}
-                            </span>
-                        </div>
-
+                        @livewire('wishlist-button', ['productId' => $product->id], key('wl-new-' . $product->id))
                     </div>
-                @endforeach
-            </div>
+
+                    <h3 class="font-body text-xs text-ink leading-snug line-clamp-2 mb-1">
+                        <a href="{{ route('product', $product->slug) }}" class="hover:text-smoke transition-colors">
+                            {{ $product->name }}
+                        </a>
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        @if ($product->compare_price)
+                            <span class="font-body text-xs text-smoke line-through">
+                                ₺{{ number_format($product->compare_price, 2, ',', '.') }}
+                            </span>
+                        @endif
+                        <span class="font-body text-sm font-medium text-ink">
+                            ₺{{ number_format($product->price, 2, ',', '.') }}
+                        </span>
+                    </div>
+
+                </div>
+            @endforeach
         </div>
-
-    </section>
-
+    </div>
+</section>
 
     @php
         $appUrl = config('app.url');
