@@ -129,7 +129,7 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
     @if ($marketplaces->count() > 0)
         <div class="bg-gray-50 py-8 border-t border-gray-100">
             <div class="max-w-screen-xl mx-auto px-4">
-                <div class="flex items-center justify-center gap-12">
+                <div class="flex items-center justify-center  gap-8 ">
                     @foreach ($marketplaces as $item)
                         <a href="{{ $item['url'] }}" target="_blank" rel="noopener"
                             class="flex flex-col items-center gap-3 group">
@@ -224,10 +224,10 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
             $cats = $categories->values();
         @endphp
 
-        <div class="grid grid-cols-3 gap-1">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-1">
 
             {{-- GRUP 1 --}}
-            @foreach ($cats->slice(0, 3) as $i => $category)
+            @foreach ($cats->slice(0, 3) as $category)
                 <a href="{{ route('category', $category->slug) }}" class="group relative overflow-hidden bg-gray-900"
                     style="aspect-ratio:3/2.2;">
                     @if ($category->image)
@@ -253,7 +253,7 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
                     style="aspect-ratio:3/2.2;">
                     @if ($category->image)
                         <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}"
-                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 " />
+                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     @else
                         <div class="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900"></div>
                     @endif
@@ -270,14 +270,13 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
 
             {{-- GRUP 3 --}}
             @if ($cats->count() > 6)
-                {{-- Büyük kart --}}
                 @php $bigCat = $cats->get(6); @endphp
                 <a href="{{ route('category', $bigCat->slug) }}"
-                    class="group relative overflow-hidden bg-gray-900 col-span-2 row-span-2"
-                    style="aspect-ratio:2/1.45;">
+                    class="group relative overflow-hidden bg-gray-900 md:col-span-2 md:row-span-2"
+                    style="aspect-ratio:3/2.2;">
                     @if ($bigCat->image)
                         <img src="{{ asset('storage/' . $bigCat->image) }}" alt="{{ $bigCat->name }}"
-                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 " />
+                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     @else
                         <div class="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900"></div>
                     @endif
@@ -291,13 +290,12 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
                     </div>
                 </a>
 
-                {{-- Sağda 2 orta kart  --}}
                 @foreach ($cats->slice(7, 2) as $category)
                     <a href="{{ route('category', $category->slug) }}"
                         class="group relative overflow-hidden bg-gray-900" style="aspect-ratio:3/2.2;">
                         @if ($category->image)
                             <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}"
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 " />
+                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                         @else
                             <div class="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900"></div>
                         @endif
@@ -320,7 +318,7 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
                     style="aspect-ratio:3/2.2;">
                     @if ($category->image)
                         <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}"
-                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 " />
+                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     @else
                         <div class="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900"></div>
                     @endif
@@ -477,77 +475,80 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
     </section>
 
     {{-- ── YENİ GELENLER ── --}}
-  <section class="max-w-screen-xl mx-auto py-5">
-    <div class="overflow-hidden" x-data="{ current: 0, total: {{ max(0, count($newProducts) - 4) }}, isMobile: window.innerWidth < 768 }" x-init="window.addEventListener('resize', () => { isMobile = window.innerWidth < 768 })">
+    <section class="max-w-screen-xl mx-auto py-5">
+        <div class="overflow-hidden" x-data="{ current: 0, total: {{ max(0, count($newProducts) - 4) }}, isMobile: window.innerWidth < 768 }" x-init="window.addEventListener('resize', () => { isMobile = window.innerWidth < 768 })">
 
-        <div class="flex items-center justify-between mb-8">
-            <div class="flex-1 h-px bg-sand/50"></div>
-            <h2 class="font-body text-[11px] md:text-[20px] tracking-widest2 uppercase text-ink whitespace-nowrap">
-                Son Eklenen Ürünler
-            </h2>
-            <div class="flex-1 h-px bg-sand/50"></div>
-            <div class="flex items-center gap-2 ml-4">
-                <button @click="current = Math.max(0, current - 1)"
-                    class="w-8 h-8 border border-sand/60 flex items-center justify-center
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex-1 h-px bg-sand/50"></div>
+                <h2 class="font-body text-[11px] md:text-[20px] tracking-widest2 uppercase text-ink whitespace-nowrap">
+                    Son Eklenen Ürünler
+                </h2>
+                <div class="flex-1 h-px bg-sand/50"></div>
+                <div class="flex items-center gap-2 ml-4">
+                    <button @click="current = Math.max(0, current - 1)"
+                        class="w-8 h-8 border border-sand/60 flex items-center justify-center
                            hover:border-ink hover:bg-ink hover:text-cream transition-all text-ink">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                            d="M15.75 19.5L8.25 12l7.5-7.5" />
-                    </svg>
-                </button>
-                <button
-                    @click="current = Math.min(isMobile ? {{ max(0, count($newProducts) - 2) }} : total, current + 1)"
-                    class="w-8 h-8 border border-sand/60 flex items-center justify-center
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </button>
+                    <button
+                        @click="current = Math.min(isMobile ? {{ max(0, count($newProducts) - 2) }} : total, current + 1)"
+                        class="w-8 h-8 border border-sand/60 flex items-center justify-center
                            hover:border-ink hover:bg-ink hover:text-cream transition-all text-ink">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                            d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
-                </button>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex transition-transform duration-500"
+                :style="isMobile
+                    ?
+                    `transform: translateX(calc(-${current} * 50%))` :
+                    `transform: translateX(calc(-${current} * 25%))`">
+
+                @foreach ($newProducts as $product)
+                    <div class="w-1/2 md:w-1/4 flex-shrink-0 px-3 group">
+
+                        <div class="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-3">
+                            <a href="{{ route('product', $product->slug) }}" class="block absolute inset-0">
+                                @if ($product->main_image)
+                                    <img src="{{ asset('storage/' . $product->main_image) }}"
+                                        alt="{{ $product->name }}"
+                                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                @else
+                                    <div class="w-full h-full bg-gradient-to-br from-blush-light to-sand-light"></div>
+                                @endif
+                            </a>
+                            @livewire('wishlist-button', ['productId' => $product->id], key('wl-new-' . $product->id))
+                        </div>
+
+                        <h3 class="font-body text-xs text-ink leading-snug line-clamp-2 mb-1">
+                            <a href="{{ route('product', $product->slug) }}"
+                                class="hover:text-smoke transition-colors">
+                                {{ $product->name }}
+                            </a>
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            @if ($product->compare_price)
+                                <span class="font-body text-xs text-smoke line-through">
+                                    ₺{{ number_format($product->compare_price, 2, ',', '.') }}
+                                </span>
+                            @endif
+                            <span class="font-body text-sm font-medium text-ink">
+                                ₺{{ number_format($product->price, 2, ',', '.') }}
+                            </span>
+                        </div>
+
+                    </div>
+                @endforeach
             </div>
         </div>
-
-        <div class="flex transition-transform duration-500"
-            :style="isMobile
-                ? `transform: translateX(calc(-${current} * 50%))`
-                : `transform: translateX(calc(-${current} * 25%))`">
-
-            @foreach ($newProducts as $product)
-                <div class="w-1/2 md:w-1/4 flex-shrink-0 px-3 group">
-
-                    <div class="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-3">
-                        <a href="{{ route('product', $product->slug) }}" class="block absolute inset-0">
-                            @if ($product->main_image)
-                                <img src="{{ asset('storage/' . $product->main_image) }}" alt="{{ $product->name }}"
-                                    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                            @else
-                                <div class="w-full h-full bg-gradient-to-br from-blush-light to-sand-light"></div>
-                            @endif
-                        </a>
-                        @livewire('wishlist-button', ['productId' => $product->id], key('wl-new-' . $product->id))
-                    </div>
-
-                    <h3 class="font-body text-xs text-ink leading-snug line-clamp-2 mb-1">
-                        <a href="{{ route('product', $product->slug) }}" class="hover:text-smoke transition-colors">
-                            {{ $product->name }}
-                        </a>
-                    </h3>
-                    <div class="flex items-center gap-2">
-                        @if ($product->compare_price)
-                            <span class="font-body text-xs text-smoke line-through">
-                                ₺{{ number_format($product->compare_price, 2, ',', '.') }}
-                            </span>
-                        @endif
-                        <span class="font-body text-sm font-medium text-ink">
-                            ₺{{ number_format($product->price, 2, ',', '.') }}
-                        </span>
-                    </div>
-
-                </div>
-            @endforeach
-        </div>
-    </div>
-</section>
+    </section>
 
     @php
         $appUrl = config('app.url');

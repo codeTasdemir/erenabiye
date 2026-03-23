@@ -128,10 +128,6 @@ class CategoryResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('image')
-                    ->label('Görsel')
-                    ->circular(),
-
                 Tables\Columns\TextColumn::make('name')
                     ->label('Kategori Adı')
                     ->searchable()

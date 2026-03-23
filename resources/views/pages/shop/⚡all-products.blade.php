@@ -446,14 +446,27 @@ new #[Layout('layouts.app')] class extends Component {
                             $extraCount = $productColors->count() - 5;
                         @endphp
                         @if ($visibleColors->count())
-                            <div class="flex items-center gap-1 pt-0.5">
+                            <div class="flex items-center gap-1 pt-1">
                                 @foreach ($visibleColors as $c)
-                                    @if ($c->hex_code)
-                                        <span class="w-3.5 h-3.5 rounded-full flex-shrink-0"
-                                            style="background-color: {{ $c->hex_code }}; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12)"
-                                            title="{{ $c->name }}">
-                                        </span>
-                                    @endif
+                                    @php
+                                        $colorThumb = $product->images
+                                            ->where('color_id', $c->id)
+                                            ->sortBy('sort_order')
+                                            ->first();
+                                    @endphp
+                                    <a href="{{ route('product', $product->slug) }}" title="{{ $c->name }}"
+                                        class="relative overflow-hidden flex-shrink-0 rounded-full border-2 border-gray-200 hover:border-gray-500 transition-all"
+                                        style="width:24px; height:24px;">
+                                        @if ($colorThumb)
+                                            <img src="{{ asset('storage/' . $colorThumb->image) }}"
+                                                alt="{{ $c->name }}" class="w-full h-full object-cover"
+                                                loading="lazy" />
+                                        @else
+                                            <div class="w-full h-full rounded-full"
+                                                style="background-color: {{ $c->hex_code ?? '#ccc' }}">
+                                            </div>
+                                        @endif
+                                    </a>
                                 @endforeach
                                 @if ($extraCount > 0)
                                     <span class="font-body text-[10px] text-smoke">+{{ $extraCount }}</span>

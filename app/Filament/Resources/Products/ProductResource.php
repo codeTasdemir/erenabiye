@@ -162,12 +162,6 @@ class ProductResource extends Resource
                                 ->disk('public')
                                 ->directory('products')
                                 ->imageEditor()
-                                ->imageEditorMode(2)
-                                ->saveUploadedFileUsing(function ($file, $record) {
-                                    $filename = 'product_' . ($record?->id ?? uniqid()) . '_' . time() . '.webp';
-                                    $file->storeAs('products', $filename, 'public');
-                                    return 'products/' . $filename;
-                                })
                                 ->columnSpanFull(),
 
                             Section::make('Genel Görseller')
@@ -177,6 +171,7 @@ class ProductResource extends Resource
                                 ->schema([
                                     Repeater::make('generalImages')
                                         ->label('')
+                                        ->defaultItems(0)
                                         ->relationship('generalImages')
                                         ->schema([
                                             FileUpload::make('image')
@@ -212,6 +207,7 @@ class ProductResource extends Resource
                                 ->schema([
                                     Repeater::make('colorImages')
                                         ->label('')
+                                        ->defaultItems(0)
                                         ->relationship('colorImages')
                                         ->schema([
                                             Select::make('color_id')
@@ -222,7 +218,6 @@ class ProductResource extends Resource
                                                         ->mapWithKeys(fn($c) => [$c->id => $c->name])
                                                 )
                                                 ->searchable()
-                                                ->required()
                                                 ->columnSpanFull(),
 
                                             FileUpload::make('image')
@@ -230,8 +225,7 @@ class ProductResource extends Resource
                                                 ->image()
                                                 ->disk('public')
                                                 ->directory('products/colors')
-                                                ->imageEditor()
-                                                ->required(),
+                                                ->imageEditor(),
 
                                             TextInput::make('alt_text')
                                                 ->label('Alt Metin (SEO)')
@@ -264,6 +258,7 @@ class ProductResource extends Resource
                             Repeater::make('colorVideos')
                                 ->label('Renge Özel Catwalk Videoları')
                                 ->relationship('colorVideos')
+                                ->defaultItems(0)
                                 ->schema([
                                     Select::make('color_id')
                                         ->label('Renk')
@@ -272,15 +267,13 @@ class ProductResource extends Resource
                                                 ->get()
                                                 ->mapWithKeys(fn($c) => [$c->id => $c->name])
                                         )
-                                        ->searchable()
-                                        ->required(),
+                                        ->searchable(),
 
                                     TextInput::make('video_url')
                                         ->label('YouTube Shorts URL')
                                         ->placeholder('https://www.youtube.com/shorts/VIDEO_ID')
                                         ->helperText('YouTube Shorts, youtu.be veya watch?v= formatları desteklenir.')
                                         ->url()
-                                        ->required()
                                         ->maxLength(255),
                                 ])
                                 ->columns(2)
@@ -304,6 +297,7 @@ class ProductResource extends Resource
                             Repeater::make('variants')
                                 ->label('Renk & Beden Varyantları')
                                 ->relationship('variants')
+                                ->defaultItems(0)
                                 ->schema([
                                     Select::make('color_id')
                                         ->label('Renk')
@@ -435,10 +429,6 @@ class ProductResource extends Resource
     {
         return $table
             ->columns([
-                ImageColumn::make('main_image')
-                    ->label('Görsel')
-                    ->square(),
-
                 TextColumn::make('name')
                     ->label('Ürün Adı')
                     ->searchable()

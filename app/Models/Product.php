@@ -16,25 +16,6 @@ class Product extends Model
 {
     use SoftDeletes, HasSlug;
 
-    protected static function booted(): void
-    {
-        static::saving(function ($model) {
-            if ($model->isDirty('main_image') && $model->main_image) {
-                $sourcePath = storage_path('app/public/' . $model->main_image);
-
-                if (file_exists($sourcePath)) {
-                    $manager = new \Intervention\Image\ImageManager(
-                        new \Intervention\Image\Drivers\Gd\Driver()
-                    );
-
-                    $manager->read($sourcePath)
-                        ->toWebp(85)
-                        ->save($sourcePath);
-
-                }
-            }
-        });
-    }
     protected $fillable = [
         'category_id',
         'name',
