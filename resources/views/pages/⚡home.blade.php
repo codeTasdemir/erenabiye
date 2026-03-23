@@ -11,7 +11,7 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
     {
         return [
             'sliders' => Slider::where('is_active', true)->orderBy('sort_order')->get(),
-            'categories' => Category::where('is_active', true)->withCount('products')->orderBy('sort_order')->get(),
+            'categories' => Category::where('is_active', true)->withCount('products')->orderBy('sort_order')->limit(12)->get(),
             'featuredProducts' => Product::where('is_active', true)
                 ->where('is_featured', true)
                 ->with(['category', 'variants.color', 'variants.size'])
