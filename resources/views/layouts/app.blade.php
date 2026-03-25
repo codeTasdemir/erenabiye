@@ -73,7 +73,7 @@
 </head>
 
 <body>
-    <div class="max-w-screen-xl mx-auto px-4">
+    <div class="max-w-screen-xl mx-auto px-1 md:px-4">
         @livewire('layout.header')
 
         <main>

@@ -127,7 +127,7 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
     @endphp
 
     @if ($marketplaces->count() > 0)
-        <div class="bg-gray-50 py-8 border-t border-gray-100">
+        <div class="bg-gray-50 py-1 md:py-8 border-t border-gray-100">
             <div class="max-w-screen-xl mx-auto px-4">
                 <div class="flex items-center justify-center  gap-8 ">
                     @foreach ($marketplaces as $item)
@@ -151,80 +151,115 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
 
     {{-- ── BİLGİ ÇUBUĞU ── --}}
     <div class="bg-white border-b border-gray-100 py-4">
-        <div class="max-w-screen-xl mx-auto px-4">
+        <div class="max-w-screen-xl mx-auto px-0 md:px-4">
 
-            {{-- Mobil: 2 kolon grid | Desktop: yatay flex --}}
-            <div class="grid grid-cols-2 gap-3 md:flex md:items-center md:justify-between md:gap-0">
+            <div class="grid grid-cols-5 gap-2 md:flex md:items-center md:justify-between md:gap-0">
 
                 {{-- Güvenli Alışveriş --}}
-                <div class="flex items-center gap-2.5">
+                <div class="flex flex-col items-center gap-1 md:flex-row">
                     <svg class="w-6 h-6 md:w-8 md:h-8 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                             d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.955 11.955 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
                     </svg>
-                    <span class="text-xs md:text-sm text-gray-600 font-medium">Güvenli Alışveriş</span>
+                    <span
+                        class="text-[10px] md:text-sm text-gray-600 font-medium text-center md:text-left leading-tight">Güvenli
+                        Alışveriş</span>
                 </div>
+
                 <div class="hidden md:block w-px h-5 bg-gray-200"></div>
 
                 {{-- Sorunsuz İade --}}
-                <div class="flex items-center gap-2.5">
+                <div class="flex flex-col items-center gap-1 md:flex-row">
                     <svg class="w-6 h-6 md:w-8 md:h-8 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                             d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                     </svg>
-                    <span class="text-xs md:text-sm text-gray-600 font-medium">Sorunsuz İade</span>
+                    <span
+                        class="text-[10px] md:text-sm text-gray-600 font-medium text-center md:text-left leading-tight">Sorunsuz
+                        İade</span>
                 </div>
 
                 <div class="hidden md:block w-px h-5 bg-gray-200"></div>
 
                 {{-- Kapıda Ödeme --}}
-                <div class="flex items-center gap-2.5">
+                <div class="flex flex-col items-center gap-1 md:flex-row">
                     <svg class="w-6 h-6 md:w-8 md:h-8 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                             d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
                     </svg>
-                    <span class="text-xs md:text-sm text-gray-600 font-medium">Kapıda Ödeme</span>
+                    <span
+                        class="text-[10px] md:text-sm text-gray-600 font-medium text-center md:text-left leading-tight">Kapıda
+                        Ödeme</span>
                 </div>
+
                 <div class="hidden md:block w-px h-5 bg-gray-200"></div>
 
                 {{-- Ücretsiz Kargo --}}
-                <div class="flex items-center gap-2.5">
+                <div class="flex flex-col items-center gap-1 md:flex-row">
                     <svg class="w-6 h-6 md:w-8 md:h-8 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                             d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
                     </svg>
-                    <span class="text-xs md:text-sm text-gray-600 font-medium">Ücretsiz Kargo</span>
+                    <span
+                        class="text-[10px] md:text-sm text-gray-600 font-medium text-center md:text-left leading-tight">Ücretsiz
+                        Kargo</span>
                 </div>
 
-                {{-- Ayırıcı (sadece desktop) --}}
                 <div class="hidden md:block w-px h-5 bg-gray-200"></div>
 
                 {{-- Aynı Gün Kargo --}}
-                <div class="flex items-center gap-2.5 col-span-2 md:col-span-1 justify-center md:justify-start">
+                <div class="flex flex-col items-center gap-1 md:flex-row">
                     <svg class="w-6 h-6 md:w-8 md:h-8 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                             d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
-                    <span class="text-xs md:text-sm text-gray-600 font-medium">Aynı Gün Kargo</span>
+                    <span
+                        class="text-[10px] md:text-sm text-gray-600 font-medium text-center md:text-left leading-tight">Aynı
+                        Gün Kargo</span>
                 </div>
 
             </div>
         </div>
     </div>
-
     {{-- ── KATEGORİLER ── --}}
-    <section class="max-w-screen-xl mx-auto  ">
+    <section class="max-w-screen-xl mx-auto">
 
         @php
             $cats = $categories->values();
         @endphp
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-1">
+
+        <div class="flex flex-col gap-0 md:hidden">
+            @foreach ($cats as $category)
+                <a href="{{ route('category', $category->slug) }}"
+                    class="group relative overflow-hidden bg-gray-900 block mt-1 md:mt-1" style="aspect-ratio:16/9;">
+                    @if ($category->image)
+                        <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}"
+                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    @else
+                        <div class="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900"></div>
+                    @endif
+                    <div class="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors duration-300">
+                    </div>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4">
+                        <h3 class="font-body text-base tracking-widest uppercase text-white font-semibold text-center">
+                            {{ $category->name }}
+                        </h3>
+                        <span
+                            class="border border-white text-white text-xs tracking-widest uppercase px-5 py-2 font-medium">
+                            HEMEN KEŞFET !
+                        </span>
+                    </div>
+                </a>
+            @endforeach
+        </div>
+
+        <div class="hidden md:grid md:grid-cols-3 gap-1">
 
             {{-- GRUP 1 --}}
             @foreach ($cats->slice(0, 3) as $category)
@@ -238,9 +273,8 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
                     @endif
                     <div class="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors duration-300">
                     </div>
-                    <div class="absolute bottom-0 left-0 right-0 p-1 md:pl-3 md:pt-1 md:pb-1 bg-black/50">
-                        <h3
-                            class="font-body text-[11px] md:text-[20px] tracking-widest uppercase text-white font-medium">
+                    <div class="absolute bottom-0 left-0 right-0 pl-3 pt-1 pb-1 bg-black/50">
+                        <h3 class="font-body text-[20px] tracking-widest uppercase text-white font-medium">
                             {{ $category->name }}
                         </h3>
                     </div>
@@ -259,9 +293,8 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
                     @endif
                     <div class="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors duration-300">
                     </div>
-                    <div class="absolute bottom-0 left-0 right-0 p-1 md:pl-3 md:pt-1 md:pb-1 bg-black/50">
-                        <h3
-                            class="font-body text-[11px] md:text-[20px] tracking-widest uppercase text-white font-medium">
+                    <div class="absolute bottom-0 left-0 right-0 pl-3 pt-1 pb-1 bg-black/50">
+                        <h3 class="font-body text-[20px] tracking-widest uppercase text-white font-medium">
                             {{ $category->name }}
                         </h3>
                     </div>
@@ -272,7 +305,7 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
             @if ($cats->count() > 6)
                 @php $bigCat = $cats->get(6); @endphp
                 <a href="{{ route('category', $bigCat->slug) }}"
-                    class="group relative overflow-hidden bg-gray-900 md:col-span-2 md:row-span-2"
+                    class="group relative overflow-hidden bg-gray-900 col-span-2 row-span-2"
                     style="aspect-ratio:3/2.2;">
                     @if ($bigCat->image)
                         <img src="{{ asset('storage/' . $bigCat->image) }}" alt="{{ $bigCat->name }}"
@@ -282,9 +315,8 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
                     @endif
                     <div class="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors duration-300">
                     </div>
-                    <div class="absolute bottom-0 left-0 right-0 p-1 md:pl-3 md:pt-1 md:pb-1 bg-black/50">
-                        <h3
-                            class="font-body text-[11px] md:text-[20px] tracking-widest uppercase text-white font-medium">
+                    <div class="absolute bottom-0 left-0 right-0 pl-3 pt-1 pb-1 bg-black/50">
+                        <h3 class="font-body text-[20px] tracking-widest uppercase text-white font-medium">
                             {{ $bigCat->name }}
                         </h3>
                     </div>
@@ -302,9 +334,8 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
                         <div
                             class="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors duration-300">
                         </div>
-                        <div class="absolute bottom-0 left-0 right-0 p-1 md:pl-3 md:pt-1 md:pb-1 bg-black/50">
-                            <h3
-                                class="font-body text-[11px] md:text-[20px] tracking-widest uppercase text-white font-medium">
+                        <div class="absolute bottom-0 left-0 right-0 pl-3 pt-1 pb-1 bg-black/50">
+                            <h3 class="font-body text-[20px] tracking-widest uppercase text-white font-medium">
                                 {{ $category->name }}
                             </h3>
                         </div>
@@ -324,9 +355,8 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
                     @endif
                     <div class="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition-colors duration-300">
                     </div>
-                    <div class="absolute bottom-0 left-0 right-0 p-1 md:pl-3 md:pt-1 md:pb-1 bg-black/50">
-                        <h3
-                            class="font-body text-[11px] md:text-[20px] tracking-widest uppercase text-white font-medium">
+                    <div class="absolute bottom-0 left-0 right-0 pl-3 pt-1 pb-1 bg-black/50">
+                        <h3 class="font-body text-[20px] tracking-widest uppercase text-white font-medium">
                             {{ $category->name }}
                         </h3>
                     </div>
@@ -334,6 +364,7 @@ new #[Layout('layouts.app')] #[Title('Eren Abiye – Yeni Sezon Kadın Giyim')] 
             @endforeach
 
         </div>
+
     </section>
 
 

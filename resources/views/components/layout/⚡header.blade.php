@@ -38,7 +38,7 @@ new class extends Component {
             <span
                 class="font-medium text-gray-400 tracking-wider">{{ \App\Models\Setting::get('contact_phone', '') }}</span>
         </div>
-        <div class="flex sm:hidden pt-3 items-center gap-5">
+        <div class="flex sm:hidden pt-3 items-center gap-5 pr-1 md:pr-0">
 
             {{-- Hesap --}}
             <a href="{{ auth()->check() ? route('account.orders') : route('login') }}"

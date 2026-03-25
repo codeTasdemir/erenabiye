@@ -16,7 +16,7 @@ class OrderItemsRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                ImageColumn::make('product_image')
+                ImageColumn::make('product.main_image')
                     ->label('')
                     ->disk('public')
                     ->width(60)

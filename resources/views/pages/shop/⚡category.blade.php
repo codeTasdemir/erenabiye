@@ -31,6 +31,13 @@ new #[Layout('layouts.app')] class extends Component {
         $this->category = Category::where('slug', $slug)->where('is_active', true)->firstOrFail();
         $seo = \App\Services\SeoService::forCategory($this->category);
         $this->js('document.title = ' . json_encode($seo['title']));
+
+        if ($this->minPrice === '') {
+            $this->minPrice = (string) $this->minPossiblePrice;
+        }
+        if ($this->maxPrice === '') {
+            $this->maxPrice = (string) $this->maxPossiblePrice;
+        }
     }
 
     public function loadMore(): void
@@ -94,9 +101,41 @@ new #[Layout('layouts.app')] class extends Component {
         return count($this->colors) + count($this->sizes) + ($this->minPrice ? 1 : 0) + ($this->maxPrice ? 1 : 0);
     }
 
+    public function getMinPossiblePriceProperty(): int
+    {
+        $categoryIds = Category::where('parent_id', $this->category->id)->pluck('id')->push($this->category->id)->toArray();
+        return (int) (Product::whereIn('category_id', $categoryIds)->where('is_active', true)->min('price') ?? 0);
+    }
+
+    public function getMaxPossiblePriceProperty(): int
+    {
+        $categoryIds = Category::where('parent_id', $this->category->id)->pluck('id')->push($this->category->id)->toArray();
+        return (int) (Product::whereIn('category_id', $categoryIds)->where('is_active', true)->max('price') ?? 99999);
+    }
+
     public function with(): array
     {
         $categoryIds = Category::where('parent_id', $this->category->id)->pluck('id')->push($this->category->id)->toArray();
+
+        // Filtresiz base query ile gerçek min/max fiyatları al
+        $baseQuery = Product::whereIn('category_id', $categoryIds)->where('is_active', true);
+
+        $this->minPossiblePrice = (int) ($baseQuery->min('price') ?? 0);
+        $this->maxPossiblePrice = (int) ($baseQuery->max('price') ?? 99999);
+        if ($this->minPrice === '') {
+            $this->minPrice = (string) $this->minPossiblePrice;
+        }
+        if ($this->maxPrice === '') {
+            $this->maxPrice = (string) $this->maxPossiblePrice;
+        }
+
+        // İlk yüklemede sınırlara eşitle
+        if ($this->minPrice === '') {
+            $this->minPrice = (string) $this->minPossiblePrice;
+        }
+        if ($this->maxPrice === '') {
+            $this->maxPrice = (string) $this->maxPossiblePrice;
+        }
 
         $query = Product::whereIn('category_id', $categoryIds)
             ->where('is_active', true)
@@ -108,10 +147,10 @@ new #[Layout('layouts.app')] class extends Component {
         if (!empty($this->sizes)) {
             $query->whereHas('variants', fn($q) => $q->whereIn('size_id', $this->sizes)->where('stock', '>', 0));
         }
-        if ($this->minPrice !== '') {
+        if ($this->minPrice !== '' && $this->minPrice !== (string) $this->minPossiblePrice) {
             $query->where('price', '>=', (float) $this->minPrice);
         }
-        if ($this->maxPrice !== '') {
+        if ($this->maxPrice !== '' && $this->maxPrice !== (string) $this->maxPossiblePrice) {
             $query->where('price', '<=', (float) $this->maxPrice);
         }
 
@@ -137,6 +176,7 @@ new #[Layout('layouts.app')] class extends Component {
     }
 };
 ?>
+
 <div>
     <style>
         details.filter-dropdown {
@@ -155,7 +195,7 @@ new #[Layout('layouts.app')] class extends Component {
         details.filter-dropdown .dropdown-panel {
             position: absolute;
             top: 100%;
-            left: 0;
+            left: -20px;
             margin-top: 4px;
             background: white;
             border: 1px solid rgba(194, 178, 160, 0.6);
@@ -169,6 +209,29 @@ new #[Layout('layouts.app')] class extends Component {
 
         details.filter-dropdown[open] .chevron {
             transform: rotate(180deg);
+        }
+
+        .range-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            pointer-events: all;
+            width: 16px;
+            height: 16px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .range-thumb::-moz-range-thumb {
+            pointer-events: all;
+            width: 16px;
+            height: 16px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
         }
     </style>
 
@@ -188,7 +251,7 @@ new #[Layout('layouts.app')] class extends Component {
         </div>
     </div>
 
-    <div class="max-w-screen-xl mx-auto px-4 md:px-6 py-8 md:py-10">
+    <div class="max-w-screen-xl mx-auto py-8 md:py-10 px-0 md:px-6">
 
         {{-- Sayfa Başlığı --}}
         <div class="text-center mb-6 md:mb-8">
@@ -219,14 +282,14 @@ new #[Layout('layouts.app')] class extends Component {
         @endif
 
         {{-- ── FİLTRE ÇUBUĞU ── --}}
-        <div class=" border  border-sand/40 py-1 mb-6 md:mb-8">
+        <div class="border border-sand/40 bg-white mb-8 sticky top-0 z-50 md:static md:z-auto">
             <div class="flex flex-wrap items-center gap-1 md:gap-0">
 
                 {{-- Renk Filtresi --}}
                 <details x-data="{ open: false }" :open="open" @toggle.prevent class="filter-dropdown">
                     <summary @click.prevent="open = !open"
-                        class="flex items-center gap-1 font-body text-xs text-ink md:px-4 py-2
-               border-r border-sand/40 hover:text-smoke transition-colors whitespace-nowrap">
+                        class="flex items-center gap-1 font-body text-xs text-ink px-3 md:px-4 py-2
+                               border-r border-sand/40 hover:text-smoke transition-colors whitespace-nowrap">
                         Renk
                         @if (count($this->colors) > 0)
                             <span
@@ -245,7 +308,7 @@ new #[Layout('layouts.app')] class extends Component {
                                 <button wire:click="toggleColor({{ $color->id }})"
                                     wire:key="color-{{ $color->id }}" title="{{ $color->name }}"
                                     class="w-7 h-7 rounded-full border-2 transition-all flex-shrink-0
-                           {{ in_array($color->id, $this->colors) ? 'border-ink scale-110' : 'border-transparent hover:border-smoke/50' }}"
+                                           {{ in_array($color->id, $this->colors) ? 'border-ink scale-110' : 'border-transparent hover:border-smoke/50' }}"
                                     style="background-color: {{ $color->hex_code ?? '#ccc' }}; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1)">
                                 </button>
                             @endforeach
@@ -257,7 +320,7 @@ new #[Layout('layouts.app')] class extends Component {
                 <details x-data="{ open: false }" :open="open" @toggle.prevent class="filter-dropdown">
                     <summary @click.prevent="open = !open"
                         class="flex items-center gap-1.5 font-body text-xs text-ink px-3 md:px-4 py-2
-               border-r border-sand/40 hover:text-smoke transition-colors whitespace-nowrap">
+                               border-r border-sand/40 hover:text-smoke transition-colors whitespace-nowrap">
                         Beden
                         @if (count($this->sizes) > 0)
                             <span
@@ -276,7 +339,7 @@ new #[Layout('layouts.app')] class extends Component {
                                 <button wire:click="toggleSize({{ $size->id }})"
                                     wire:key="size-{{ $size->id }}"
                                     class="min-w-[2.5rem] h-9 px-2 border font-body text-xs transition-all
-                           {{ in_array($size->id, $this->sizes) ? 'bg-ink text-cream border-ink' : 'border-sand text-ink hover:border-ink' }}">
+                                           {{ in_array($size->id, $this->sizes) ? 'bg-ink text-cream border-ink' : 'border-sand text-ink hover:border-ink' }}">
                                     {{ $size->name }}
                                 </button>
                             @endforeach
@@ -288,9 +351,9 @@ new #[Layout('layouts.app')] class extends Component {
                 <details x-data="{ open: false }" :open="open" @toggle.prevent class="filter-dropdown">
                     <summary @click.prevent="open = !open"
                         class="flex items-center gap-1.5 font-body text-xs text-ink px-3 md:px-4 py-2
-               border-r border-sand/40 hover:text-smoke transition-colors whitespace-nowrap">
+                               border-r border-sand/40 hover:text-smoke transition-colors whitespace-nowrap">
                         Fiyat
-                        @if ($this->minPrice || $this->maxPrice)
+                        @if ($this->minPrice > $this->minPossiblePrice || $this->maxPrice < $this->maxPossiblePrice)
                             <span
                                 class="bg-ink text-cream rounded-full w-4 h-4 flex items-center justify-center text-[9px]">1</span>
                         @endif
@@ -299,33 +362,54 @@ new #[Layout('layouts.app')] class extends Component {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </summary>
-                    <div class="dropdown-panel p-4 w-56" x-on:click.stop>
-                        <p class="font-body text-xs text-smoke mb-3 uppercase tracking-widest">Fiyat Aralığı (₺)</p>
+                    <div class="dropdown-panel p-4 w-72" x-on:click.stop x-data="{
+                        minVal: {{ $this->minPrice ?: $this->minPossiblePrice }},
+                        maxVal: {{ $this->maxPrice ?: $this->maxPossiblePrice }},
+                        min: {{ $this->minPossiblePrice }},
+                        max: {{ $this->maxPossiblePrice }},
+                        get minPercent() { return ((this.minVal - this.min) / (this.max - this.min)) * 100 },
+                        get maxPercent() { return ((this.maxVal - this.min) / (this.max - this.min)) * 100 },
+                        updateMin(val) {
+                            this.minVal = Math.min(Number(val), this.maxVal - 1);
+                            $wire.set('minPrice', String(this.minVal));
+                        },
+                        updateMax(val) {
+                            this.maxVal = Math.max(Number(val), this.minVal + 1);
+                            $wire.set('maxPrice', String(this.maxVal));
+                        }
+                    }">
+                        <p class="font-body text-xs text-smoke mb-4 uppercase tracking-widest">Fiyat Aralığı (₺)</p>
+                        <div class="flex justify-between font-body text-xs text-ink mb-4">
+                            <span>₺<span x-text="minVal.toLocaleString('tr-TR')"></span></span>
+                            <span>₺<span x-text="maxVal.toLocaleString('tr-TR')"></span></span>
+                        </div>
+                        <div class="relative h-1 bg-sand rounded-full mx-2 mb-6">
+                            <div class="absolute h-1 bg-ink rounded-full"
+                                :style="`left: ${minPercent}%; right: ${100 - maxPercent}%`"></div>
+                            <input type="range" :min="min" :max="max" x-model="minVal"
+                                @input="updateMin($event.target.value)"
+                                class="range-thumb absolute w-full h-1 appearance-none bg-transparent pointer-events-none" />
+                            <input type="range" :min="min" :max="max" x-model="maxVal"
+                                @input="updateMax($event.target.value)"
+                                class="range-thumb absolute w-full h-1 appearance-none bg-transparent pointer-events-none" />
+                        </div>
                         <div class="flex gap-2 items-center">
-                            <input wire:model.live.debounce.600ms="minPrice" type="number" placeholder="Min"
-                                class="w-full border border-sand px-3 py-2 font-body text-xs
-                       focus:outline-none focus:border-ink bg-transparent" />
-                            <span class="text-smoke text-xs">—</span>
-                            <input wire:model.live.debounce.600ms="maxPrice" type="number" placeholder="Max"
-                                class="w-full border border-sand px-3 py-2 font-body text-xs
-                       focus:outline-none focus:border-ink bg-transparent" />
+                            <input type="number" :value="minVal" @change="updateMin($event.target.value)"
+                                class="w-full border border-sand px-2 py-1.5 font-body text-xs focus:outline-none focus:border-ink bg-transparent text-center" />
+                            <span class="text-smoke text-xs flex-shrink-0">—</span>
+                            <input type="number" :value="maxVal" @change="updateMax($event.target.value)"
+                                class="w-full border border-sand px-2 py-1.5 font-body text-xs focus:outline-none focus:border-ink bg-transparent text-center" />
                         </div>
                     </div>
                 </details>
 
-                {{-- Temizle --}}
-                @if ($this->activeFilterCount > 0)
-                    <button wire:click="clearFilters"
-                        class="font-body text-xs text-smoke hover:text-ink underline transition-colors px-3 py-2 whitespace-nowrap">
-                        Temizle ({{ $this->activeFilterCount }})
-                    </button>
-                @endif
+
 
                 {{-- Sıralama --}}
                 <div class="ml-auto">
                     <select wire:model.live="sort"
                         class="font-body text-xs border-0 border-l border-sand/40 pl-3 md:pl-4 py-2
-               focus:outline-none bg-transparent cursor-pointer text-ink">
+                               focus:outline-none bg-transparent cursor-pointer text-ink">
                         <option value="latest">Sıralama</option>
                         <option value="latest">En Yeni</option>
                         <option value="featured">Öne Çıkanlar</option>
@@ -334,11 +418,18 @@ new #[Layout('layouts.app')] class extends Component {
                         <option value="name_asc">İsme Göre A-Z</option>
                     </select>
                 </div>
+                {{-- Temizle --}}
+                @if ($this->activeFilterCount > 0)
+                    <button wire:click="clearFilters"
+                        class="font-body text-xs text-smoke hover:text-ink underline transition-colors px-3 py-2 whitespace-nowrap">
+                        Filtreleri Temizle 
+                    </button>
+                @endif
             </div>
 
             {{-- Aktif Filtre Etiketleri --}}
             @if ($this->activeFilterCount > 0)
-                <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-sand/30">
+                <div class="flex flex-wrap gap-2  border-t border-sand/30">
                     @foreach ($availableColors->whereIn('id', $this->colors) as $color)
                         <button wire:click="toggleColor({{ $color->id }})"
                             class="flex items-center gap-1.5 bg-sand/20 px-3 py-1 font-body text-xs hover:bg-sand/40 transition-colors">
@@ -355,10 +446,11 @@ new #[Layout('layouts.app')] class extends Component {
                             <span class="text-smoke ml-0.5">×</span>
                         </button>
                     @endforeach
-                    @if ($this->minPrice || $this->maxPrice)
+                    @if ($this->minPrice > $this->minPossiblePrice || $this->maxPrice < $this->maxPossiblePrice)
                         <button wire:click="$set('minPrice', ''); $set('maxPrice', '')"
                             class="flex items-center gap-1 bg-sand/20 px-3 py-1 font-body text-xs hover:bg-sand/40 transition-colors">
-                            ₺{{ $this->minPrice ?: '0' }} — ₺{{ $this->maxPrice ?: '∞' }}
+                            ₺{{ number_format($this->minPrice, 0, ',', '.') }} —
+                            ₺{{ number_format($this->maxPrice, 0, ',', '.') }}
                             <span class="text-smoke ml-0.5">×</span>
                         </button>
                     @endif
@@ -367,12 +459,12 @@ new #[Layout('layouts.app')] class extends Component {
         </div>
 
         {{-- Sonuç Sayısı --}}
-        <p class="font-body text-xs text-smoke mb-4">
+        <p class="font-body text-xs text-smoke mb-4 px-4 md:px-0">
             <span class="text-ink font-medium">{{ $totalCount }}</span> ürün bulundu
         </p>
 
         {{-- Ürün Grid --}}
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 md:gap-5">
             @forelse($products as $product)
                 @php
                     $galleryImages = $product->images
@@ -391,7 +483,7 @@ new #[Layout('layouts.app')] class extends Component {
                 @endphp
 
                 <div class="group" wire:key="product-{{ $product->id }}">
-                    <div class="relative aspect-[3/4] overflow-hidden bg-gray-50 mb-3" x-data="{
+                    <div class="relative aspect-[3/4] overflow-hidden bg-gray-50 mb-1 md:mb-3" x-data="{
                         current: 0,
                         timer: null,
                         images: {{ json_encode($galleryImages->map(fn($img) => asset('storage/' . $img))->values()->toArray()) }}
@@ -411,14 +503,12 @@ new #[Layout('layouts.app')] class extends Component {
                             @endif
                         </a>
 
-                        {{-- Görsel nokta indikatörleri --}}
                         @if ($galleryImages->count() > 1)
                             <div
                                 class="absolute bottom-8 left-0 right-0 flex justify-center gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                 <template x-for="(img, index) in images" :key="index">
                                     <span class="w-1.5 h-1.5 rounded-full transition-colors duration-200"
-                                        :class="current === index ? 'bg-white' : 'bg-white/50'">
-                                    </span>
+                                        :class="current === index ? 'bg-white' : 'bg-white/50'"></span>
                                 </template>
                             </div>
                         @endif
@@ -428,7 +518,7 @@ new #[Layout('layouts.app')] class extends Component {
                         @if ($product->compare_price)
                             <span
                                 class="absolute bottom-2 left-2 bg-ink text-cream pointer-events-none
-                             font-body text-[10px] tracking-widest uppercase px-2 py-1 z-20">
+                                         font-body text-[10px] tracking-widest uppercase px-2 py-1 z-20">
                                 %{{ $product->discount_percentage }} İndirim
                             </span>
                         @endif
@@ -436,13 +526,13 @@ new #[Layout('layouts.app')] class extends Component {
                         @if ($product->is_new)
                             <span
                                 class="absolute bottom-2 right-2 bg-sand text-ink pointer-events-none
-                             font-body text-[10px] tracking-widest uppercase px-2 py-1 z-20">
+                                         font-body text-[10px] tracking-widest uppercase px-2 py-1 z-20">
                                 Yeni
                             </span>
                         @endif
                     </div>
 
-                    <div class="space-y-1">
+                    <div class="space-y-1 px-1 md:px-0">
                         <h3 class="font-body text-xs text-ink leading-snug line-clamp-2">
                             <a href="{{ route('product', $product->slug) }}"
                                 class="hover:text-smoke transition-colors">
@@ -483,8 +573,7 @@ new #[Layout('layouts.app')] class extends Component {
                                                 loading="lazy" />
                                         @else
                                             <div class="w-full h-full rounded-full"
-                                                style="background-color: {{ $c->hex_code ?? '#ccc' }}">
-                                            </div>
+                                                style="background-color: {{ $c->hex_code ?? '#ccc' }}"></div>
                                         @endif
                                     </a>
                                 @endforeach
@@ -496,16 +585,17 @@ new #[Layout('layouts.app')] class extends Component {
                     </div>
                 </div>
             @empty
-                {{-- aynı kalır --}}
+                <div class="col-span-full py-20 text-center">
+                    <p class="font-body text-sm text-smoke">Bu kriterlere uygun ürün bulunamadı.</p>
+                </div>
             @endforelse
         </div>
-
 
         {{-- Daha Fazla Yükle --}}
         @if ($hasMore)
             <div class="mt-10 flex flex-col items-center gap-2">
                 <button wire:click="loadMore" wire:loading.attr="disabled"
-                    class="font-body text-xs tracking-widest2 uppercase border border-ink
+                    class="font-body text-xs tracking-widest uppercase border border-ink
                            px-12 py-3.5 hover:bg-ink hover:text-cream transition-all duration-200
                            disabled:opacity-50 disabled:cursor-wait">
                     <span wire:loading.remove wire:target="loadMore">Daha Fazla Göster</span>
@@ -525,7 +615,7 @@ new #[Layout('layouts.app')] class extends Component {
             <div class="absolute inset-0 bg-ink/50" wire:click="$toggle('filterOpen')"></div>
             <div class="absolute right-0 top-0 bottom-0 w-80 bg-cream overflow-y-auto p-6 space-y-8">
                 <div class="flex items-center justify-between">
-                    <h2 class="font-body text-xs tracking-widest2 uppercase font-medium">Filtrele</h2>
+                    <h2 class="font-body text-xs tracking-widest uppercase font-medium">Filtrele</h2>
                     <button wire:click="$toggle('filterOpen')" class="text-smoke hover:text-ink">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -557,19 +647,48 @@ new #[Layout('layouts.app')] class extends Component {
                         @endforeach
                     </div>
                 </div>
-                <div>
+                <div x-data="{
+                    minVal: {{ $minPrice ?: $minPossiblePrice }},
+                    maxVal: {{ $maxPrice ?: $maxPossiblePrice }},
+                    min: {{ $minPossiblePrice }},
+                    max: {{ $maxPossiblePrice }},
+                    get minPercent() { return ((this.minVal - this.min) / (this.max - this.min)) * 100 },
+                    get maxPercent() { return ((this.maxVal - this.min) / (this.max - this.min)) * 100 },
+                    updateMin(val) {
+                        this.minVal = Math.min(Number(val), this.maxVal - 1);
+                        $wire.set('minPrice', String(this.minVal));
+                    },
+                    updateMax(val) {
+                        this.maxVal = Math.max(Number(val), this.minVal + 1);
+                        $wire.set('maxPrice', String(this.maxVal));
+                    }
+                }">
                     <h3 class="font-body text-xs tracking-widest uppercase text-smoke mb-4">Fiyat (₺)</h3>
+                    <div class="flex justify-between font-body text-xs text-ink mb-4">
+                        <span>₺<span x-text="minVal.toLocaleString('tr-TR')"></span></span>
+                        <span>₺<span x-text="maxVal.toLocaleString('tr-TR')"></span></span>
+                    </div>
+                    <div class="relative h-1 bg-sand rounded-full mx-2 mb-6">
+                        <div class="absolute h-1 bg-ink rounded-full"
+                            :style="`left: ${minPercent}%; right: ${100 - maxPercent}%`"></div>
+                        <input type="range" :min="min" :max="max" x-model="minVal"
+                            @input="updateMin($event.target.value)"
+                            class="range-thumb absolute w-full h-1 appearance-none bg-transparent pointer-events-none" />
+                        <input type="range" :min="min" :max="max" x-model="maxVal"
+                            @input="updateMax($event.target.value)"
+                            class="range-thumb absolute w-full h-1 appearance-none bg-transparent pointer-events-none" />
+                    </div>
                     <div class="flex gap-2 items-center">
-                        <input wire:model.live.debounce.600ms="minPrice" type="number" placeholder="Min"
-                            class="w-full border border-sand px-3 py-2 font-body text-xs focus:outline-none bg-transparent" />
-                        <span class="text-smoke">—</span>
-                        <input wire:model.live.debounce.600ms="maxPrice" type="number" placeholder="Max"
-                            class="w-full border border-sand px-3 py-2 font-body text-xs focus:outline-none bg-transparent" />
+                        <input type="number" :value="minVal" @change="updateMin($event.target.value)"
+                            class="w-full border border-sand px-2 py-1.5 font-body text-xs focus:outline-none bg-transparent text-center" />
+                        <span class="text-smoke text-xs">—</span>
+                        <input type="number" :value="maxVal" @change="updateMax($event.target.value)"
+                            class="w-full border border-sand px-2 py-1.5 font-body text-xs focus:outline-none bg-transparent text-center" />
                     </div>
                 </div>
                 @if ($this->activeFilterCount > 0)
                     <button wire:click="clearFilters"
-                        class="w-full border border-ink font-body text-xs tracking-widest2
+                        class="w-full border border-ink font-body text-xs tracking-widest
                                uppercase py-3 hover:bg-ink hover:text-cream transition-all">
                         Filtreleri Temizle ({{ $this->activeFilterCount }})
                     </button>
@@ -593,31 +712,16 @@ new #[Layout('layouts.app')] class extends Component {
     "breadcrumb": {
         "@type": "BreadcrumbList",
         "itemListElement": [
-            {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Ana Sayfa",
-                "item": "{{ config('app.url') }}"
-            },
-            {
-                "@type": "ListItem",
-                "position": 2,
-                "name": @json($category->name),
-                "item": "{{ route('category', $category->slug) }}"
-            }
+            {"@type": "ListItem", "position": 1, "name": "Ana Sayfa", "item": "{{ config('app.url') }}"},
+            {"@type": "ListItem", "position": 2, "name": @json($category->name), "item": "{{ route('category', $category->slug) }}"}
         ]
     },
     "mainEntity": {
         "@type": "ItemList",
         "itemListElement": [
             @foreach($products as $index => $product)
-{
-    "@type": "ListItem",
-    "position": {{ $loop->iteration }},
-    "url": "{{ route('product', $product->slug) }}",
-    "name": @json($product->name)
-}@if(!$loop->last),@endif
-@endforeach
+            {"@type": "ListItem", "position": {{ $loop->iteration }}, "url": "{{ route('product', $product->slug) }}", "name": @json($product->name)}@if(!$loop->last),@endif
+            @endforeach
         ]
     }
 }
